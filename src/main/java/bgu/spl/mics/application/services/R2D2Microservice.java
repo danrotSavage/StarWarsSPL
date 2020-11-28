@@ -1,5 +1,6 @@
 package main.java.bgu.spl.mics.application.services;
 
+import main.java.bgu.spl.mics.Message;
 import main.java.bgu.spl.mics.MicroService;
 
 /**
@@ -15,6 +16,8 @@ public class R2D2Microservice extends MicroService {
     public R2D2Microservice(long duration) {
         super("R2D2");
     }
+
+
 
     @Override
     protected void initialize() {

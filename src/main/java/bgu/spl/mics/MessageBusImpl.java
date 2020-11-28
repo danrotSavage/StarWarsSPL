@@ -1,10 +1,8 @@
 package main.java.bgu.spl.mics;
 
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
-import main.java.bgu.spl.mics.application.passiveObjects.Ewok;
-import main.java.bgu.spl.mics.application.passiveObjects.Ewoks;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
@@ -14,34 +12,58 @@ import java.util.Queue;
  * Only private fields and methods can be added to this class.
  */
 public class MessageBusImpl implements MessageBus {
-	private List<Queue<Event>> microservice;
+	private List<Queue<Message>> microservice;
+
+	private List<MicroService> AttackEvent;
+	private List<MicroService> DeactivationEvent;
+	private List<MicroService> BombEvent;
+
+
+	private List<MicroService> Broadcast;
+
 
 	private static MessageBusImpl messageBusImpl;
 
+    public static Object lock=new Object();
 
-
-	private MessageBusImpl()
+	public MessageBusImpl()
 	{
-		microservice=new LinkedList<Queue<Event>>() ;
+
+		microservice=new ArrayList<Queue<Message>>() ;
 	}
 
-	public synchronized MessageBusImpl getEwoks(int count){
+	public static MessageBusImpl getMessageBusImpl(){
 		if(messageBusImpl==null){
-			messageBusImpl=new MessageBusImpl();
+			synchronized (lock) {
+				if(messageBusImpl==null)
+				   messageBusImpl = new MessageBusImpl();
+			}
 		}
 		return messageBusImpl;
 	}
 
 
-
-	@Override
-	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
-		
+    private void addEvent(MicroService m, AttackEvent e){
+		AttackEvent.add(m);
+    }
+	private void addEvent(MicroService m, main.java.bgu.spl.mics.application.messages.DeactivationEvent e){
+		DeactivationEvent.add(m);
+	}
+	private void addEvent(MicroService m, main.java.bgu.spl.mics.application.messages.BombEvent e){
+		BombEvent.add(m);
 	}
 
 	@Override
+	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
+		//addEvent(m,type);
+		//add the relevent event to the relevent queue
+	}
+
+
+
+	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		
+
     }
 
 	@Override @SuppressWarnings("unchecked")

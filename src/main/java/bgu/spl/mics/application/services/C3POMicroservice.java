@@ -1,5 +1,6 @@
 package main.java.bgu.spl.mics.application.services;
 
+import main.java.bgu.spl.mics.Message;
 import main.java.bgu.spl.mics.MicroService;
 
 
@@ -17,8 +18,11 @@ public class C3POMicroservice extends MicroService {
         super("C3PO");
     }
 
+
     @Override
     protected void initialize() {
 
     }
+
+
 }
