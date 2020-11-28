@@ -32,6 +32,7 @@ public class FutureTest {
 
         future.get();
         assertTrue(future.isDone());
+        assertEquals(future.get(),"the meaning of the universe");
     }
 
 
