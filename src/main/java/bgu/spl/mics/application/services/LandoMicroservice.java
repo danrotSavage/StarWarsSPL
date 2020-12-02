@@ -1,5 +1,8 @@
 package main.java.bgu.spl.mics.application.services;
 
+import jdk.jfr.Event;
+import main.java.bgu.spl.mics.Broadcast;
+import main.java.bgu.spl.mics.Callback;
 import main.java.bgu.spl.mics.Message;
 import main.java.bgu.spl.mics.MicroService;
 import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
@@ -21,4 +24,15 @@ public class LandoMicroservice  extends MicroService {
     protected void initialize() {
        
     }
+    public void AcceptBroadcast (Broadcast b)
+    {
+        c.call(b);
+
+    }
+
+
+
+
+
+
 }

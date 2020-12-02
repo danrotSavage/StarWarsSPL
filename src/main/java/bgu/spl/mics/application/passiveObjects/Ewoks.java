@@ -1,6 +1,8 @@
 package main.java.bgu.spl.mics.application.passiveObjects;
 
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Passive object representing the resource manager.
  * <p>
@@ -27,5 +29,24 @@ public class Ewoks {
              ewoks=new Ewoks(count);
          }
          return ewoks;
+     }
+
+
+
+     public synchronized void fetchEwok(int[] count){
+        for (int i=0;i<count.length;i++){
+            while (!ewokArray[count[i]].isAvailable()){
+               try {
+                   this.wait();
+                   i=0;
+               }catch (InterruptedException e){}
+            }
+        }
+        for (int i=0;i<count.length;i++) {
+            ewokArray[count[i]].acquire();
+        }
+
+
+
      }
 }

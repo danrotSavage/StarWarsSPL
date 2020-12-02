@@ -1,10 +1,9 @@
 package main.java.bgu.spl.mics;
 
+import jdk.jshell.spi.ExecutionControl;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -12,90 +11,163 @@ import java.util.Queue;
  * Only private fields and methods can be added to this class.
  */
 public class MessageBusImpl implements MessageBus {
-	private List<Queue<Message>> microservice;
-
-	private List<MicroService> AttackEvent;
-	private List<MicroService> DeactivationEvent;
-	private List<MicroService> BombEvent;
 
 
-	private List<MicroService> Broadcast;
+	private HashMap<MicroService, Queue<Message>> IndividualQueue;
+	private HashMap<Class<? extends Message>, Queue<MicroService>> roundRobinQueues;
+	private HashMap<MicroService, LinkedList<Queue<MicroService>>> unsubscribingQueue;
 
 
 	private static MessageBusImpl messageBusImpl;
 
-    public static Object lock=new Object();
+	public static Object lock = new Object();
 
-	public MessageBusImpl()
-	{
-
-		microservice=new ArrayList<Queue<Message>>() ;
+	private MessageBusImpl() {
+         IndividualQueue=new HashMap<>();
+		roundRobinQueues=new HashMap<>();
 	}
 
-	public static MessageBusImpl getMessageBusImpl(){
-		if(messageBusImpl==null){
+	public static MessageBusImpl getMessageBusImpl() {
+		if (messageBusImpl == null) {
 			synchronized (lock) {
-				if(messageBusImpl==null)
-				   messageBusImpl = new MessageBusImpl();
+				if (messageBusImpl == null)
+					messageBusImpl = new MessageBusImpl();
 			}
 		}
 		return messageBusImpl;
 	}
 
 
-    private void addEvent(MicroService m, AttackEvent e){
-		AttackEvent.add(m);
-    }
-	private void addEvent(MicroService m, main.java.bgu.spl.mics.application.messages.DeactivationEvent e){
-		DeactivationEvent.add(m);
-	}
-	private void addEvent(MicroService m, main.java.bgu.spl.mics.application.messages.BombEvent e){
-		BombEvent.add(m);
-	}
-
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
-		//addEvent(m,type);
-		//add the relevent event to the relevent queue
-	}
+		//take the relevant round robin queue for the specific event
+		synchronized (this) {
+			if (!roundRobinQueues.containsKey(type)) {
+				Queue<MicroService> b = new LinkedList<>();
+				roundRobinQueues.put(type, b);
 
+			}
+
+		}
+		roundRobinQueues.get(type).add(m);
+
+		synchronized (this) {
+			if (!unsubscribingQueue.containsKey(m)) {
+				LinkedList<Queue<MicroService>> lq = new LinkedList<>();
+				unsubscribingQueue.put(m,lq);
+
+			}
+
+		}
+        unsubscribingQueue.get(m).add(roundRobinQueues.get(type));
+	}
 
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
+		//take the relevant round robin queue for the specific event
 
-    }
+		synchronized (this) {
+			if (!roundRobinQueues.containsKey(type)) {
+				Queue<MicroService> b = new LinkedList<>();
+				roundRobinQueues.put(type, b);
+			}
+		}
+		roundRobinQueues.get(type).add(m);
 
-	@Override @SuppressWarnings("unchecked")
+		synchronized (this) {
+			if (!unsubscribingQueue.containsKey(m)) {
+				LinkedList<Queue<MicroService>> lq = new LinkedList<>();
+				unsubscribingQueue.put(m,lq);
+
+			}
+
+		}
+		unsubscribingQueue.get(m).add(roundRobinQueues.get(type));
+
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public <T> void complete(Event<T> e, T result) {
-		
+
 	}
 
 	@Override
 	public void sendBroadcast(Broadcast b) {
-		
+		roundRobinQueues.
+		int size = roundRobinQueues.get(b).size();
+		for (int i = 0; i < size; i++) {
+			MicroService temp = (roundRobinQueues.get(b)).remove();
+			roundRobinQueues.get(b).add(temp);
+			//take the microservice and add to its queue the event
+			if (IndividualQueue.containsKey(temp)) {
+
+
+				IndividualQueue.get(temp).add(b);
+				notifyAll();
+			}
+		}
 	}
+
+
 
 	
 	@Override
-	public <T> Future<T> sendEvent(Event<T> e) {
-		
-        return null;
+	public <T> Future<T> sendEvent(Event<T> e)throws Exception
+	{
+		boolean again=true;
+		while (again) {
+			MicroService temp = (roundRobinQueues.get(e)).remove();
+			roundRobinQueues.get(e).add(temp);
+
+			//take the microservice and add to its queue the event
+			if (IndividualQueue.containsKey(temp)) {
+				IndividualQueue.get(temp).add(e);
+				notifyAll();
+				again=false;
+			}
+		}
+		throw new Exception("no");
 	}
 
 	@Override
 	public void register(MicroService m) {
-		
+		if(!IndividualQueue.containsKey(m))
+		{
+			Queue< Message> que = new LinkedList<>();
+			IndividualQueue.put(m,que);
+		}
+
 	}
 
 	@Override
-	public void unregister(MicroService m) {
-		
+	public synchronized void unregister(MicroService m) {
+		if(IndividualQueue.containsKey(m)) {
+			IndividualQueue.remove(m);
+		}
+		Iterator <Queue<MicroService>> itr = unsubscribingQueue.get(m).iterator();
+		while (itr.hasNext()) {
+			int size = itr.next().size();
+			for (int i = 0; i < size; i++) {
+				MicroService temp = (roundRobinQueues.get(m)).remove();
+				if (temp != m) {
+					roundRobinQueues.get(m).add(temp);
+
+				}
+			}
+		}
+
 	}
 
 	@Override
-	public Message awaitMessage(MicroService m) throws InterruptedException {
-		
-		return null;
+	public  Message awaitMessage(MicroService m) throws InterruptedException {
+		while (IndividualQueue.get(m).isEmpty()) {
+			try {
+				this.wait();
+			} catch (InterruptedException ignored){}
+		}
+		Message mess  = IndividualQueue.get(m).remove();
+		return mess;
 	}
 }
