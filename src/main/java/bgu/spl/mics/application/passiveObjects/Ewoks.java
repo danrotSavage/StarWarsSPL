@@ -1,6 +1,7 @@
 package main.java.bgu.spl.mics.application.passiveObjects;
 
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -24,26 +25,32 @@ public class Ewoks {
          }
      }
 
-     public synchronized Ewoks getEwoks(int count){
+     public static synchronized Ewoks getEwoks(int count){
          if(ewoks==null){
              ewoks=new Ewoks(count);
          }
          return ewoks;
      }
+     public static synchronized Ewoks getEwoks() {
+        if(ewoks==null){
+            System.out.printf("big problem");
+        }
+        return ewoks;
+     }
 
 
 
-     public synchronized void fetchEwok(int[] count){
-        for (int i=0;i<count.length;i++){
-            while (!ewokArray[count[i]].isAvailable()){
+     public synchronized void fetchEwok(List<Integer> count){
+        for (int i=0;i<count.size();i++){
+            while (!ewokArray[count.get(i)].isAvailable()){
                try {
                    this.wait();
                    i=0;
                }catch (InterruptedException e){}
             }
         }
-        for (int i=0;i<count.length;i++) {
-            ewokArray[count[i]].acquire();
+        for (int i=0;i<count.size();i++) {
+            ewokArray[count.get(i)].acquire();
         }
 
 

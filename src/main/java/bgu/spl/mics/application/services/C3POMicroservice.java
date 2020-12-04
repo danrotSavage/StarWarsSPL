@@ -4,6 +4,9 @@ import main.java.bgu.spl.mics.Callback;
 import main.java.bgu.spl.mics.Message;
 import main.java.bgu.spl.mics.MicroService;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
+import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
+import main.java.bgu.spl.mics.application.passiveObjects.Attack;
+import main.java.bgu.spl.mics.application.passiveObjects.Ewoks;
 
 
 /**
@@ -23,11 +26,24 @@ public class C3POMicroservice extends MicroService {
 
     @Override
     protected void initialize() {
+        subscribeEvent(AttackEvent.class,(AttackEvent attack)-> {
 
-    }
-    public void SolveEvent(AttackEvent a){
-        callback.call(a);
+            Ewoks e = Ewoks.getEwoks();
 
+            e.fetchEwok(attack.getAttack().getSerials());
+
+            try {
+                Thread.sleep((long) attack.getAttack().getDuration());
+            }catch (Exception ex){}
+
+            complete(attack,attack.getAttack());
+        }
+        );
+        subscribeBroadcast(DeactivationBroadcast.class,(DeactivationBroadcast d)->{
+            this.terminate();
+        });
     }
+
+
 
 }

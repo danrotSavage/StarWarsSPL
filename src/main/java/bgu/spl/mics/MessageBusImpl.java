@@ -13,18 +13,20 @@ import java.util.*;
 public class MessageBusImpl implements MessageBus {
 
 
-	private HashMap<MicroService, Queue<Message>> IndividualQueue;
-	private HashMap<Class<? extends Message>, Queue<MicroService>> roundRobinQueues;
-	private HashMap<MicroService, LinkedList<Queue<MicroService>>> unsubscribingQueue;
-
+	private HashMap< MicroService, Queue<Message> > IndividualQueue;
+	private HashMap< Class<? extends Message> , Queue<MicroService> > roundRobinQueues;
+	private HashMap< MicroService , LinkedList<Queue<MicroService>> > unsubscribingQueue;
+    private HashMap<Event,Future> theTruth;
 
 	private static MessageBusImpl messageBusImpl;
 
 	public static Object lock = new Object();
 
+
 	private MessageBusImpl() {
-         IndividualQueue=new HashMap<>();
+		IndividualQueue=new HashMap<>();
 		roundRobinQueues=new HashMap<>();
+		theTruth =new HashMap<>();
 	}
 
 	public static MessageBusImpl getMessageBusImpl() {
@@ -90,12 +92,12 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> void complete(Event<T> e, T result) {
-
+         theTruth.get(e).resolve(result);
 	}
 
 	@Override
-	public void sendBroadcast(Broadcast b) {
-		roundRobinQueues.
+	public synchronized void sendBroadcast(Broadcast b) {
+
 		int size = roundRobinQueues.get(b).size();
 		for (int i = 0; i < size; i++) {
 			MicroService temp = (roundRobinQueues.get(b)).remove();
@@ -153,7 +155,6 @@ public class MessageBusImpl implements MessageBus {
 				MicroService temp = (roundRobinQueues.get(m)).remove();
 				if (temp != m) {
 					roundRobinQueues.get(m).add(temp);
-
 				}
 			}
 		}

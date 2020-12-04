@@ -24,6 +24,7 @@ public abstract class MicroService implements Runnable {
 
     private HashMap<Class<? extends Message>,Callback> call;
     private String name;
+    private boolean terminated=false;
 
     private void acceptMessage(){
         MessageBusImpl x=MessageBusImpl.getMessageBusImpl();
@@ -143,7 +144,8 @@ public abstract class MicroService implements Runnable {
      *               {@code e}.
      */
     protected final <T> void complete(Event<T> e, T result) {
-    	
+    	MessageBusImpl m=MessageBusImpl.getMessageBusImpl();
+    	m.complete(e,result);
     }
 
     /**
@@ -156,7 +158,7 @@ public abstract class MicroService implements Runnable {
      * message.
      */
     protected final void terminate() {
-    	
+    	terminated=false;
     }
 
     /**
@@ -173,8 +175,13 @@ public abstract class MicroService implements Runnable {
      */
     @Override
     public final void run() {
-        acceptMessage();
-    	
+        MessageBusImpl m=MessageBusImpl.getMessageBusImpl();
+        m.register(this);
+        initialize();
+        while(!terminated) {
+            acceptMessage();
+        }
+        m.unregister(this);
     }
 
 }

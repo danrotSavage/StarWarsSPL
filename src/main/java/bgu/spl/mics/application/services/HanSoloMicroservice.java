@@ -4,6 +4,8 @@ package main.java.bgu.spl.mics.application.services;
 import main.java.bgu.spl.mics.Callback;
 import main.java.bgu.spl.mics.MicroService;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
+import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
+import main.java.bgu.spl.mics.application.passiveObjects.Ewoks;
 
 /**
  * HanSoloMicroservices is in charge of the handling {@link AttackEvent}.
@@ -15,17 +17,27 @@ import main.java.bgu.spl.mics.application.messages.AttackEvent;
  */
 public class HanSoloMicroservice extends MicroService {
     Callback callback;
-
-
     public HanSoloMicroservice() {
         super("Han");
     }
+
     @Override
     protected void initialize() {
+        subscribeEvent(AttackEvent.class,(AttackEvent attack)-> {
 
-    }
-    public void SolveEvent(AttackEvent a){
-        callback.call(a);
+                    Ewoks e = Ewoks.getEwoks();
 
+                    e.fetchEwok(attack.getAttack().getSerials());
+
+                    try {
+                        Thread.sleep((long) attack.getAttack().getDuration());
+                    }catch (Exception ex){}
+
+                    complete(attack,attack.getAttack());
+                }
+        );
+        subscribeBroadcast(DeactivationBroadcast.class,(DeactivationBroadcast d)->{
+            this.terminate();
+        });
     }
 }
