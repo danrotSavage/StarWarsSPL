@@ -1,4 +1,6 @@
-package main.java.bgu.spl.mics;
+package main.java.bgu.spl.mics.Messages;
+
+import main.java.bgu.spl.mics.MicroService;
 
 /**
  * The message-bus is a shared object used for communication between

@@ -1,4 +1,4 @@
-package main.java.bgu.spl.mics;
+package main.java.bgu.spl.mics.Messages;
 
 /**
  * A "Marker" interface extending {@link Message}. A micro-service that sends an

@@ -1,4 +1,4 @@
-package main.java.bgu.spl.mics;
+package main.java.bgu.spl.mics.Messages;
 
 /**
  * A message is a data-object which is passed between micro-services as a means

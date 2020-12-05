@@ -1,5 +1,7 @@
 package main.java.bgu.spl.mics;
 
+import main.java.bgu.spl.mics.Messages.*;
+
 import java.util.HashMap;
 
 /**

@@ -1,11 +1,7 @@
 package main.java.bgu.spl.mics.application.services;
 
-import jdk.jfr.Event;
-import main.java.bgu.spl.mics.Broadcast;
-import main.java.bgu.spl.mics.Callback;
-import main.java.bgu.spl.mics.Message;
 import main.java.bgu.spl.mics.MicroService;
-import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
+import main.java.bgu.spl.mics.application.messages.DeathStarDestroyed;
 import main.java.bgu.spl.mics.application.messages.DestroyTheSITH;
 
 /**
@@ -29,6 +25,7 @@ public class LandoMicroservice  extends MicroService {
             try {
                 Thread.sleep(sleepTime);
             }catch (Exception e){}
+            sendBroadcast(new DeathStarDestroyed());
             terminate();
         });
     }

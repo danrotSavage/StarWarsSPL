@@ -1,4 +1,4 @@
-package main.java.bgu.spl.mics;
+package main.java.bgu.spl.mics.Messages;
 
 /**
  * a callback is a function designed to be called when a message is received.

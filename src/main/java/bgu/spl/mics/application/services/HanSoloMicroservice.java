@@ -1,10 +1,11 @@
 package main.java.bgu.spl.mics.application.services;
 
 
-import main.java.bgu.spl.mics.Callback;
+import main.java.bgu.spl.mics.Messages.Callback;
 import main.java.bgu.spl.mics.MicroService;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
-import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
+import main.java.bgu.spl.mics.application.messages.C3PO_HabSolo_DoneBrodcast;
+import main.java.bgu.spl.mics.application.messages.DeathStarDestroyed;
 import main.java.bgu.spl.mics.application.passiveObjects.Ewoks;
 
 /**
@@ -36,7 +37,10 @@ public class HanSoloMicroservice extends MicroService {
                     complete(attack,attack.getAttack());
                 }
         );
-        subscribeBroadcast(DeactivationBroadcast.class,(DeactivationBroadcast d)->{
+        subscribeBroadcast(C3PO_HabSolo_DoneBrodcast.class,(C3PO_HabSolo_DoneBrodcast d)->{
+            //diary
+        });
+        subscribeBroadcast(DeathStarDestroyed.class,(DeathStarDestroyed d)->{
             this.terminate();
         });
     }

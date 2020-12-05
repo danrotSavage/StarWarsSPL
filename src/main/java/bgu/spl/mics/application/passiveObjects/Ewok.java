@@ -1,6 +1,4 @@
 package main.java.bgu.spl.mics.application.passiveObjects;
-import main.java.bgu.spl.mics.Future;
-import main.java.bgu.spl.mics.application.passiveObjects.Ewok;
 
 /**
  * Passive data-object representing a forest creature summoned when HanSolo and C3PO receive AttackEvents.

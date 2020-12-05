@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import main.java.bgu.spl.mics.MicroService;
+import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
+import main.java.bgu.spl.mics.application.messages.DeathStarDestroyed;
+import main.java.bgu.spl.mics.application.messages.DestroyTheSITH;
 import main.java.bgu.spl.mics.application.passiveObjects.Attack;
 
 /**
@@ -24,6 +27,12 @@ public class LeiaMicroservice extends MicroService {
 
     @Override
     protected void initialize() {
-    	
+        subscribeBroadcast(DeathStarDestroyed.class,(DeathStarDestroyed d)->{
+            this.terminate();
+        });
+
+
+
     }
+
 }
