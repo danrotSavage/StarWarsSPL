@@ -3,7 +3,6 @@ package test.java.bgu.spl.mics;
 import main.java.bgu.spl.mics.MessageBusImpl;
 import main.java.bgu.spl.mics.MicroService;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
-import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
 import main.java.bgu.spl.mics.application.messages.DeactivationEvent;
 import main.java.bgu.spl.mics.application.passiveObjects.Attack;
 import main.java.bgu.spl.mics.application.passiveObjects.Ewok;

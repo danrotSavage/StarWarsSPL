@@ -1,15 +1,8 @@
 package test.java.bgu.spl.mics;
 
 import main.java.bgu.spl.mics.MessageBusImpl;
-import main.java.bgu.spl.mics.MicroService;
-import main.java.bgu.spl.mics.application.messages.AttackEvent;
-import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
-import main.java.bgu.spl.mics.application.messages.DeactivationEvent;
-import main.java.bgu.spl.mics.application.passiveObjects.Attack;
-import main.java.bgu.spl.mics.application.passiveObjects.Ewok;
 import main.java.bgu.spl.mics.application.services.*;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import static org.junit.Assert.*;
@@ -44,7 +37,7 @@ public class MessageBusImplTest {
         }
         m.unregister(c);
     }*/
-
+/*
     @Test
     //in this test lando subscribed to deactivation broadcast. we created an instance of
     // deactivation broadcast and sent th e broadcast and the end we made sure the broadcast remained the same
@@ -67,7 +60,7 @@ public class MessageBusImplTest {
 
         m.unregister(L);
     }
-
+*/
 
    /* @Test
     //complete resolves the future of deactivation which should trigger the deactivation broadcast,
@@ -92,7 +85,7 @@ public class MessageBusImplTest {
     }
 
 */
-
+/*
     @Test
     public void unregisterWithSubscribed() {
         LandoMicroservice L=new LandoMicroservice(1);
@@ -136,7 +129,7 @@ public class MessageBusImplTest {
 
         fail();
     }
-
+*/
 
 
 

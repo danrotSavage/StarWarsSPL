@@ -36,7 +36,7 @@ public abstract class MicroService implements Runnable {
              message=x.awaitMessage(this);
         }
         catch (InterruptedException e){}
-        (call.get(message)).call(message);
+        (call.get(message.getClass())).call(message);
     }
 
 
@@ -120,7 +120,9 @@ public abstract class MicroService implements Runnable {
         try {
             ftr =MessageBusImpl.getMessageBusImpl().sendEvent(e);
         }
-        catch (Exception exp){}
+        catch (Exception exp){
+            System.out.printf("1");
+        }
 
         return ftr;
     }
@@ -160,7 +162,8 @@ public abstract class MicroService implements Runnable {
      * message.
      */
     protected final void terminate() {
-    	terminated=false;
+
+    	terminated=true;
     }
 
     /**

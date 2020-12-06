@@ -3,8 +3,8 @@ package main.java.bgu.spl.mics.application.services;
 import main.java.bgu.spl.mics.Messages.Callback;
 import main.java.bgu.spl.mics.MicroService;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
-import main.java.bgu.spl.mics.application.messages.C3PO_HabSolo_DoneBrodcast;
-import main.java.bgu.spl.mics.application.messages.DeathStarDestroyed;
+import main.java.bgu.spl.mics.application.messages.TerminateBroadcast;
+import main.java.bgu.spl.mics.application.passiveObjects.Diary;
 import main.java.bgu.spl.mics.application.passiveObjects.Ewoks;
 
 
@@ -26,22 +26,24 @@ public class C3POMicroservice extends MicroService {
     @Override
     protected void initialize() {
         subscribeEvent(AttackEvent.class,(AttackEvent attack)-> {
-
             Ewoks e = Ewoks.getEwoks();
-
             e.fetchEwok(attack.getAttack().getSerials());
-
             try {
                 Thread.sleep((long) attack.getAttack().getDuration());
             }catch (Exception ex){}
 
+            Diary diary=Diary.getDiary();
+            diary.addAttack();
+            diary.setC3POFinish(System.currentTimeMillis());
+
             complete(attack,attack.getAttack());
+            e.returnEwoks(attack.getAttack().getSerials());
+
         }
         );
-        subscribeBroadcast(C3PO_HabSolo_DoneBrodcast.class,(C3PO_HabSolo_DoneBrodcast d)->{
-            //diary
-        });
-        subscribeBroadcast(DeathStarDestroyed.class,(DeathStarDestroyed d)->{
+
+        subscribeBroadcast(TerminateBroadcast.class,(TerminateBroadcast d)->{
+            Diary.getDiary().setC3POTerminate(System.currentTimeMillis());
             this.terminate();
         });
     }

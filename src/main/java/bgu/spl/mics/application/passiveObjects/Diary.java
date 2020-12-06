@@ -1,6 +1,7 @@
 package main.java.bgu.spl.mics.application.passiveObjects;
 
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -11,7 +12,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Diary {
     AtomicInteger totalAttack;
+    long [] timeArray;
 
+    public AtomicInteger getTotalAttacks(){
+        return totalAttack;
+    }
     public long getHanSoloFinish() {
         return HanSoloFinish;
     }
@@ -86,8 +91,9 @@ public class Diary {
     long LandoTerminate;
 
 
-    public Diary(){
+    private Diary(){
         totalAttack = new AtomicInteger();
+
 
 
         long HanSoloFinish=0;
@@ -99,6 +105,16 @@ public class Diary {
         long R2D2Terminate=0;
         long LandoTerminate=0;
 
+
+    }
+
+    private static  Diary DiaryInstance;
+    public synchronized static Diary getDiary(){
+        if(DiaryInstance==null)
+        {
+            DiaryInstance=new Diary();
+        }
+        return DiaryInstance;
     }
 
     public void addAttack()
@@ -108,5 +124,33 @@ public class Diary {
             val = totalAttack.get();
         }
         while (!totalAttack.compareAndSet(val,val+1));
+    }
+
+    @Override
+    public String toString() {
+        timeArray= new long[8];
+        timeArray[0]= HanSoloFinish;
+        timeArray[1]= C3POFinish;
+        timeArray[2]= R2D2Deactivate;
+        timeArray[3]= LeiaTerminate;
+        timeArray[4]= HanSoloTerminate;
+        timeArray[5]= C3POTerminate;
+        timeArray[6]= R2D2Terminate;
+        timeArray[7]= LandoTerminate;
+        Arrays.sort(timeArray);
+        for (int i = 0; i < timeArray.length; i++) {
+            System.out.println(timeArray[i]);        }
+
+        return "Diary{" +
+                "totalAttack=" + totalAttack +
+                ", HanSoloFinish=" + HanSoloFinish +
+                ", C3POFinish=" + C3POFinish +
+                ", R2D2Deactivate=" + R2D2Deactivate +
+                ", LeiaTerminate=" + LeiaTerminate +
+                ", HanSoloTerminate=" + HanSoloTerminate +
+                ", C3POTerminate=" + C3POTerminate +
+                ", R2D2Terminate=" + R2D2Terminate +
+                ", LandoTerminate=" + LandoTerminate +
+                '}';
     }
 }

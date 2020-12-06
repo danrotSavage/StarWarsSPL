@@ -1,8 +1,9 @@
 package main.java.bgu.spl.mics.application.services;
 
 import main.java.bgu.spl.mics.MicroService;
-import main.java.bgu.spl.mics.application.messages.DeathStarDestroyed;
-import main.java.bgu.spl.mics.application.messages.DestroyTheSITH;
+import main.java.bgu.spl.mics.application.messages.TerminateBroadcast;
+import main.java.bgu.spl.mics.application.messages.DestroyDeathStarEvent;
+import main.java.bgu.spl.mics.application.passiveObjects.Diary;
 
 /**
  * LandoMicroservice
@@ -21,12 +22,18 @@ public class LandoMicroservice  extends MicroService {
 
     @Override
     protected void initialize() {
-        subscribeBroadcast(DestroyTheSITH.class,(DestroyTheSITH d)->{
+
+        subscribeEvent(DestroyDeathStarEvent.class,(DestroyDeathStarEvent d)->{
             try {
                 Thread.sleep(sleepTime);
             }catch (Exception e){}
-            sendBroadcast(new DeathStarDestroyed());
-            terminate();
+            complete(d,3);
+
+        });
+        subscribeBroadcast(TerminateBroadcast.class,(TerminateBroadcast d)->{
+            Diary.getDiary().setLandoTerminate(System.currentTimeMillis());
+
+            this.terminate();
         });
     }
 

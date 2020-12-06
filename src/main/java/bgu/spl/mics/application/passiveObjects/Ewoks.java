@@ -19,8 +19,8 @@ public class Ewoks {
 
      private Ewoks(int count)
      {
-         ewokArray=new Ewok[count];
-         for (int i=0;i<count;i++){
+         ewokArray=new Ewok[count+1];
+         for (int i=1;i<count+1;i++){
              ewokArray[i]=new Ewok(i);
          }
      }
@@ -55,5 +55,13 @@ public class Ewoks {
 
 
 
+     }
+     public synchronized void returnEwoks(List<Integer> ewoks)
+     {
+
+         for (int i = 0; i < ewoks.size(); i++) {
+             ewokArray[ewoks.get(i)].release();
+         }
+         notifyAll();
      }
 }

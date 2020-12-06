@@ -2,7 +2,6 @@ package main.java.bgu.spl.mics.application.services;
 
 import main.java.bgu.spl.mics.Message;
 import main.java.bgu.spl.mics.MicroService;
-import main.java.bgu.spl.mics.application.messages.DeactivationBroadcast;
 
 /**
  * LandoMicroservice

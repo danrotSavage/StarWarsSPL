@@ -26,14 +26,13 @@ public class MessageBusImpl implements MessageBus {
 		IndividualQueue=new HashMap<>();
 		roundRobinQueues=new HashMap<>();
 		theTruth =new HashMap<>();
+		unsubscribingQueue=new HashMap<>();
+		lock=new Object();
 	}
 
-	public static MessageBusImpl getMessageBusImpl() {
+	public synchronized static MessageBusImpl getMessageBusImpl() {
 		if (messageBusImpl == null) {
-			synchronized (lock) {
-				if (messageBusImpl == null)
-					messageBusImpl = new MessageBusImpl();
-			}
+			messageBusImpl = new MessageBusImpl();
 		}
 		return messageBusImpl;
 	}
@@ -92,15 +91,16 @@ public class MessageBusImpl implements MessageBus {
 	@SuppressWarnings("unchecked")
 	public <T> void complete(Event<T> e, T result) {
          theTruth.get(e).resolve(result);
+		System.out.println(Thread.currentThread().getId() + " has completed an attack");
 	}
 
 	@Override
 	public synchronized void sendBroadcast(Broadcast b) {
 
-		int size = roundRobinQueues.get(b).size();
+		int size = roundRobinQueues.get(b.getClass()).size();
 		for (int i = 0; i < size; i++) {
-			MicroService temp = (roundRobinQueues.get(b)).remove();
-			roundRobinQueues.get(b).add(temp);
+			MicroService temp = (roundRobinQueues.get(b.getClass())).remove();
+			roundRobinQueues.get(b.getClass()).add(temp);
 			//take the microservice and add to its queue the event
 			if (IndividualQueue.containsKey(temp)) {
 
@@ -115,12 +115,15 @@ public class MessageBusImpl implements MessageBus {
 
 	
 	@Override
-	public <T> Future<T> sendEvent(Event<T> e)throws Exception
+	public synchronized  <T> Future<T> sendEvent(Event<T> e)throws Exception
 	{
+		Future f=new Future();
+		theTruth.put(e,f);
 		boolean again=true;
-		while (again) {
-			MicroService temp = (roundRobinQueues.get(e)).remove();
-			roundRobinQueues.get(e).add(temp);
+		int i=0;
+		while (again&&i<roundRobinQueues.size()) {
+			MicroService temp = (roundRobinQueues.get(e.getClass())).remove();
+			roundRobinQueues.get(e.getClass()).add(temp);
 
 			//take the microservice and add to its queue the event
 			if (IndividualQueue.containsKey(temp)) {
@@ -128,8 +131,9 @@ public class MessageBusImpl implements MessageBus {
 				notifyAll();
 				again=false;
 			}
+			i++;
 		}
-		throw new Exception("no");
+		return theTruth.get(e);
 	}
 
 	@Override
@@ -149,11 +153,12 @@ public class MessageBusImpl implements MessageBus {
 		}
 		Iterator <Queue<MicroService>> itr = unsubscribingQueue.get(m).iterator();
 		while (itr.hasNext()) {
-			int size = itr.next().size();
-			for (int i = 0; i < size; i++) {
-				MicroService temp = (roundRobinQueues.get(m)).remove();
+			Queue<MicroService> queueMicro = itr.next();
+			for (int i = 0; i < queueMicro.size(); i++) {
+
+				MicroService temp = queueMicro.poll();
 				if (temp != m) {
-					roundRobinQueues.get(m).add(temp);
+					queueMicro.add(temp);
 				}
 			}
 		}
@@ -161,12 +166,14 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public  Message awaitMessage(MicroService m) throws InterruptedException {
+	public synchronized Message awaitMessage(MicroService m) throws InterruptedException {
+
 		while (IndividualQueue.get(m).isEmpty()) {
 			try {
 				this.wait();
 			} catch (InterruptedException ignored){}
 		}
+		System.out.println(Thread.currentThread().getId() + " has taken an attack");
 		Message mess  = IndividualQueue.get(m).remove();
 		return mess;
 	}
