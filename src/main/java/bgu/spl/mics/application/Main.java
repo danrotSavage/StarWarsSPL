@@ -23,8 +23,8 @@ import java.util.List;
  */
 public class Main {
 	public static void main(String[] args) throws IOException {
-		final String filepath="C:\\Users\\guyne\\IdeaProjects\\StarWarsSPL\\input.json";
-		final String filepathOut="C:\\Users\\guyne\\IdeaProjects\\StarWarsSPL\\output.json";
+		final String filepath="\\home\\spl211\\IdeaProjects\\StarWarsSPL\\src\\main\\java\\Tests.json";
+		final String filepathOut="\\home\\spl211\\IdeaProjects\\StarWarsSPL\\output.json";
 
 		Gson gson =new Gson();
 		GSON_EXAMPLE_1 dan = gson.fromJson(new FileReader(filepath), GSON_EXAMPLE_1.class);
