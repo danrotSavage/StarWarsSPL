@@ -11,7 +11,7 @@ import java.util.HashMap;
  * <p>
  * Derived classes of MicroService should never directly touch the message-bus.
  * Instead, they have a set of internal protected wrapping methods (e.g.,
- * {@link #sendBroadcast(bgu.spl.mics.Broadcast)}, {@link #sendBroadcast(bgu.spl.mics.Broadcast)},
+ * {@link #sendBroadcast(bgu.spl.mics.Broadcast)}, {@link #sendBroadcast(main.java.bgu.spl.mics.Broadcast)},
  * etc.) they can use. When subscribing to message-types,
  * the derived class also supplies a {@link Callback} that should be called when
  * a message of the subscribed type was taken from the micro-service
@@ -32,10 +32,9 @@ public abstract class MicroService implements Runnable {
         MessageBusImpl x=MessageBusImpl.getMessageBusImpl();
         Message message=null;
 
-        try {
+
              message=x.awaitMessage(this);
-        }
-        catch (InterruptedException e){}
+
         (call.get(message.getClass())).call(message);
     }
 
@@ -123,7 +122,8 @@ public abstract class MicroService implements Runnable {
         catch (Exception exp){
             System.out.printf("1");
         }
-
+if (ftr==null)
+    System.out.println("null future");
         return ftr;
     }
 

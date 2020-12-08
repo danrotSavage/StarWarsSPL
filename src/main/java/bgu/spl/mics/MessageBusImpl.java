@@ -3,6 +3,8 @@ package main.java.bgu.spl.mics;
 import main.java.bgu.spl.mics.Messages.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -12,42 +14,66 @@ import java.util.*;
 public class MessageBusImpl implements MessageBus {
 
 
-	private HashMap< MicroService, Queue<Message> > IndividualQueue;
-	private HashMap< Class<? extends Message> , Queue<MicroService> > roundRobinQueues;
-	private HashMap< MicroService , LinkedList<Queue<MicroService>> > unsubscribingQueue;
-    private HashMap<Event, Future> theTruth;
+	private ConcurrentHashMap < MicroService, Queue<Message> > IndividualQueue;
+	private ConcurrentHashMap< Class<? extends Message> , Queue<MicroService> > roundRobinQueues;
+	private ConcurrentHashMap< MicroService , LinkedList<Queue<MicroService>> > unsubscribingQueue;
+    private ConcurrentHashMap<Event, Future> theTruth;
 
-	private static MessageBusImpl messageBusImpl;
+	private static MessageBusImpl messageBusImpl=new MessageBusImpl();
 
-	public static Object lock = new Object();
+	private static Object roundRobinLock = new Object();
 
+    private AtomicInteger subscribed;//count how many microservices subscribed(lea need to wait for everyone to subscribe before she can start send messages)
+    private void ZeroSubscribed(){
+		int val;
+		do {
+			val = subscribed.get();
+		}
+		while (!subscribed.compareAndSet(val,0));
+	}
+    private void addSubscribed () {
+		int val;
+		do {
+			val = subscribed.get();
+		}
+		while (!subscribed.compareAndSet(val,val+1));
+}
+	private void subtractSubscribed () {
+		int val;
+		do {
+			val = subscribed.get();
+		}
+		while (!subscribed.compareAndSet(val,val-1));
+	}
 
 	private MessageBusImpl() {
-		IndividualQueue=new HashMap<>();
-		roundRobinQueues=new HashMap<>();
-		theTruth =new HashMap<>();
-		unsubscribingQueue=new HashMap<>();
-		lock=new Object();
+		IndividualQueue=new ConcurrentHashMap<>();
+		roundRobinQueues=new ConcurrentHashMap<>();
+		theTruth =new ConcurrentHashMap<>();
+		unsubscribingQueue=new ConcurrentHashMap<>();
+		roundRobinLock=new Object();
+		subscribed = new AtomicInteger(0);
 	}
 
-	public synchronized static MessageBusImpl getMessageBusImpl() {
-		if (messageBusImpl == null) {
-			messageBusImpl = new MessageBusImpl();
-		}
-		return messageBusImpl;
-	}
+	public static MessageBusImpl getMessageBusImpl() {return messageBusImpl;}
+	public static MessageBusImpl getInstance() {return messageBusImpl;}
 
 
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
+		//System.out.println(Thread.currentThread().getId() + " has subscribed to event "+type);
 		//take the relevant round robin queue for the specific event
 		synchronized (this) {
 			if (!roundRobinQueues.containsKey(type)) {
 				Queue<MicroService> b = new LinkedList<>();
 				roundRobinQueues.put(type, b);
-
 			}
 
+			addSubscribed();
+			System.out.println(Thread.currentThread().getId() + " has added to subscribed " + subscribed.get());
+			if (subscribed.get() == 4) {
+				notifyAll();
+			}
 		}
 		roundRobinQueues.get(type).add(m);
 
@@ -55,9 +81,7 @@ public class MessageBusImpl implements MessageBus {
 			if (!unsubscribingQueue.containsKey(m)) {
 				LinkedList<Queue<MicroService>> lq = new LinkedList<>();
 				unsubscribingQueue.put(m,lq);
-
 			}
-
 		}
         unsubscribingQueue.get(m).add(roundRobinQueues.get(type));
 	}
@@ -67,7 +91,7 @@ public class MessageBusImpl implements MessageBus {
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		//take the relevant round robin queue for the specific event
 
-		synchronized (this) {
+		synchronized (roundRobinLock) {
 			if (!roundRobinQueues.containsKey(type)) {
 				Queue<MicroService> b = new LinkedList<>();
 				roundRobinQueues.put(type, b);
@@ -75,7 +99,7 @@ public class MessageBusImpl implements MessageBus {
 		}
 		roundRobinQueues.get(type).add(m);
 
-		synchronized (this) {
+		synchronized (roundRobinLock) {
 			if (!unsubscribingQueue.containsKey(m)) {
 				LinkedList<Queue<MicroService>> lq = new LinkedList<>();
 				unsubscribingQueue.put(m,lq);
@@ -91,6 +115,7 @@ public class MessageBusImpl implements MessageBus {
 	@SuppressWarnings("unchecked")
 	public <T> void complete(Event<T> e, T result) {
          theTruth.get(e).resolve(result);
+         theTruth.remove(e);
 		System.out.println(Thread.currentThread().getId() + " has completed an attack");
 	}
 
@@ -102,37 +127,54 @@ public class MessageBusImpl implements MessageBus {
 			MicroService temp = (roundRobinQueues.get(b.getClass())).remove();
 			roundRobinQueues.get(b.getClass()).add(temp);
 			//take the microservice and add to its queue the event
-			if (IndividualQueue.containsKey(temp)) {
-
-
-				IndividualQueue.get(temp).add(b);
-				notifyAll();
+			synchronized (IndividualQueue.get(temp)) {
+				if (IndividualQueue.containsKey(temp)) {
+					IndividualQueue.get(temp).add(b);
+					IndividualQueue.get(temp).notifyAll();
+				}
 			}
 		}
+		ZeroSubscribed();//only brodcast sent is terminate so no one is Subscribed
+
 	}
 
 
 
 	
 	@Override
-	public synchronized  <T> Future<T> sendEvent(Event<T> e)throws Exception
+	public synchronized  <T> Future<T> sendEvent(Event<T> e)
 	{
 		Future f=new Future();
 		theTruth.put(e,f);
 		boolean again=true;
 		int i=0;
-		while (again&&i<roundRobinQueues.size()) {
-			MicroService temp = (roundRobinQueues.get(e.getClass())).remove();
-			roundRobinQueues.get(e.getClass()).add(temp);
+		while ( subscribed.get() < 4) {
+			try {
+				System.out.println("lea went to sleep");
+				this.wait();
+			}
+			catch (Exception ex){}
+			if(subscribed.get() == 4){
+				System.out.println("lea awoke");
+			}
+		}
 
-			//take the microservice and add to its queue the event
+	while (roundRobinQueues.containsKey(e.getClass()) && !roundRobinQueues.get(e.getClass()).isEmpty() &&  i < roundRobinQueues.size() & again) {
+
+		MicroService temp = (roundRobinQueues.get(e.getClass())).remove();
+		roundRobinQueues.get(e.getClass()).add(temp);
+
+		//take the microservice and add to its queue the event
+		synchronized (IndividualQueue.get(temp)) {
 			if (IndividualQueue.containsKey(temp)) {
 				IndividualQueue.get(temp).add(e);
-				notifyAll();
-				again=false;
+				IndividualQueue.get(temp).notifyAll();
+				System.out.println(Thread.currentThread().getId() + " has awaken");
+				again = false;
 			}
-			i++;
 		}
+		i++;
+	}
 		return theTruth.get(e);
 	}
 
@@ -163,18 +205,24 @@ public class MessageBusImpl implements MessageBus {
 			}
 		}
 
+
+
 	}
 
 	@Override
-	public synchronized Message awaitMessage(MicroService m) throws InterruptedException {
+	public  Message awaitMessage(MicroService m)  {
 
-		while (IndividualQueue.get(m).isEmpty()) {
-			try {
-				this.wait();
-			} catch (InterruptedException ignored){}
+		synchronized (IndividualQueue.get(m)) {
+			while (IndividualQueue.get(m).isEmpty()) {
+				System.out.println(Thread.currentThread().getId() + " is waiting for an attack");
+				try {
+					IndividualQueue.get(m).wait();
+				} catch (InterruptedException ignored) {
+				}
+			}
+			System.out.println(Thread.currentThread().getId() + " has taken an attack");
+			Message mess = IndividualQueue.get(m).remove();
+			return mess;
 		}
-		System.out.println(Thread.currentThread().getId() + " has taken an attack");
-		Message mess  = IndividualQueue.get(m).remove();
-		return mess;
 	}
 }

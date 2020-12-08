@@ -32,9 +32,10 @@ public class LeiaMicroservice extends MicroService {
 
         // send out attack to Han and C3PO
         for (int i = 0; i < attacks.length; i++) {
-            System.out.println("Lea sent att " + i);
+
             AttackEvent e = new AttackEvent(attacks[i]);
             Future x=sendEvent(e);
+            System.out.println("Lea sent att " + i);
             f[i]=x;
         }
 

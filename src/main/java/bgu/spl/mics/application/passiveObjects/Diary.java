@@ -14,6 +14,15 @@ public class Diary {
     AtomicInteger totalAttack;
     long [] timeArray;
 
+
+    public static Diary getInstance() {
+        if(DiaryInstance==null)
+        {
+            DiaryInstance=new Diary();
+        }
+        return DiaryInstance;
+    }
+
     public AtomicInteger getTotalAttacks(){
         return totalAttack;
     }
@@ -108,7 +117,7 @@ public class Diary {
 
     }
 
-    private static  Diary DiaryInstance;
+    private static  Diary DiaryInstance = new Diary();
     public synchronized static Diary getDiary(){
         if(DiaryInstance==null)
         {
@@ -152,5 +161,17 @@ public class Diary {
                 ", R2D2Terminate=" + R2D2Terminate +
                 ", LandoTerminate=" + LandoTerminate +
                 '}';
+    }
+
+    public AtomicInteger getNumberOfAttacks() {
+        return totalAttack;
+    }
+
+    public void resetNumberAttacks() {
+        int val;
+        do {
+            val = totalAttack.get();
+        }
+        while (!totalAttack.compareAndSet(val,0));
     }
 }

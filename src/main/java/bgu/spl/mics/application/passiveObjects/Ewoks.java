@@ -41,17 +41,30 @@ public class Ewoks {
 
 
      public synchronized void fetchEwok(List<Integer> count){
-        for (int i=0;i<count.size();i++){
-            while (!ewokArray[count.get(i)].isAvailable()){
-               try {
-                   this.wait();
-                   i=0;
-               }catch (InterruptedException e){}
+         for (int i=0;i<count.size();i++){
+
+
+
+            if(ewokArray[count.get(i)].isAvailable()){
+               ewokArray[count.get(i)].acquire();
+            }
+            else {
+
+
+                while (!ewokArray[count.get(i)].isAvailable()) {
+                    try {
+                        this.wait();
+                       // i = 0;
+                    } catch (InterruptedException e) {
+                    }
+                }
+                ewokArray[count.get(i)].acquire();
+
             }
         }
-        for (int i=0;i<count.size();i++) {
-            ewokArray[count.get(i)].acquire();
-        }
+      //  for (int i=0;i<count.size();i++) {
+      //      ewokArray[count.get(i)].acquire();
+      //  }
 
 
 
